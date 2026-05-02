@@ -24,6 +24,7 @@ const initialFormState = {
 
 export default function AdminProductsPage() {
   const { showError, showSuccess } = useToast();
+
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,10 +47,14 @@ export default function AdminProductsPage() {
           fetchCategories(),
         ]);
 
-        setProducts(productResponse.data.items || []);
-        setCategories(categoryResponse.data.categories || []);
+        // Backend returns: { success: true, data: [...] }
+        setProducts(productResponse.data || []);
+        setCategories(categoryResponse.data || []);
       } catch (requestError) {
-        setError(requestError.response?.data?.message || "Unable to load product records.");
+        setError(
+          requestError.response?.data?.message ||
+            "Unable to load product records."
+        );
       } finally {
         setIsLoading(false);
       }
@@ -111,8 +116,8 @@ export default function AdminProductsPage() {
       name: formData.name.trim(),
       description: formData.description.trim(),
       price: Number(formData.price),
-      stockQuantity: Number(formData.stockQuantity),
-      categoryId: Number(formData.categoryId),
+      stockQuantity: Number(formData.stockQuantity || 0),
+      categoryId: Number(formData.categoryId || 0),
       sku: formData.sku.trim() || null,
     };
 
@@ -125,7 +130,9 @@ export default function AdminProductsPage() {
 
       setProducts((current) => {
         if (activeProduct) {
-          return current.map((product) => (product.id === savedProduct.id ? savedProduct : product));
+          return current.map((product) =>
+            product.id === savedProduct.id ? savedProduct : product
+          );
         }
 
         return [savedProduct, ...current];
@@ -138,7 +145,8 @@ export default function AdminProductsPage() {
       );
       resetForm();
     } catch (requestError) {
-      const message = requestError.response?.data?.message || "Unable to save the product.";
+      const message =
+        requestError.response?.data?.message || "Unable to save the product.";
       setError(message);
       showError("Save failed", message);
     } finally {
@@ -147,21 +155,27 @@ export default function AdminProductsPage() {
   }
 
   async function handleDelete() {
-    if (!activeProduct) {
-      return;
-    }
+    if (!activeProduct) return;
 
     setIsSaving(true);
     setError("");
 
     try {
       await deleteProduct(activeProduct.id);
-      setProducts((current) => current.filter((product) => product.id !== activeProduct.id));
+
+      setProducts((current) =>
+        current.filter((product) => product.id !== activeProduct.id)
+      );
+
       setIsDeleteOpen(false);
-      showSuccess("Product deleted", `${activeProduct.name} was removed from the catalog.`);
+      showSuccess(
+        "Product deleted",
+        `${activeProduct.name} was removed from the catalog.`
+      );
       resetForm();
     } catch (requestError) {
-      const message = requestError.response?.data?.message || "Unable to delete the product.";
+      const message =
+        requestError.response?.data?.message || "Unable to delete the product.";
       setError(message);
       showError("Delete failed", message);
     } finally {
@@ -175,7 +189,11 @@ export default function AdminProductsPage() {
         title="Manage Products"
         description="Create, update, and delete catalog items through a structured admin workflow."
         action={
-          <button type="button" className="btn btn-primary d-inline-flex align-items-center gap-2" onClick={openCreateModal}>
+          <button
+            type="button"
+            className="btn btn-primary d-inline-flex align-items-center gap-2"
+            onClick={openCreateModal}
+          >
             <Plus size={16} />
             New Product
           </button>
@@ -216,17 +234,20 @@ export default function AdminProductsPage() {
                 <th className="text-end">Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {filteredProducts.length ? (
                 filteredProducts.map((product) => (
                   <tr key={product.id}>
                     <td>
                       <div className="fw-semibold">{product.name}</div>
-                      <div className="small text-secondary">{product.description || "No description"}</div>
+                      <div className="small text-secondary">
+                        {product.description || "No description"}
+                      </div>
                     </td>
                     <td>{product.categoryName || "Unassigned"}</td>
                     <td>{formatCurrency(product.price)}</td>
-                    <td>{product.stockQuantity}</td>
+                    <td>{product.stockQuantity ?? "N/A"}</td>
                     <td>{product.sku || "N/A"}</td>
                     <td className="text-end">
                       <div className="d-inline-flex gap-2">
@@ -237,6 +258,7 @@ export default function AdminProductsPage() {
                         >
                           <Pencil size={14} />
                         </button>
+
                         <button
                           type="button"
                           className="btn btn-outline-danger btn-sm"
@@ -283,8 +305,18 @@ export default function AdminProductsPage() {
             >
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary" form="product-form" disabled={isSaving}>
-              {isSaving ? "Saving..." : activeProduct ? "Save Changes" : "Create Product"}
+
+            <button
+              type="submit"
+              className="btn btn-primary"
+              form="product-form"
+              disabled={isSaving}
+            >
+              {isSaving
+                ? "Saving..."
+                : activeProduct
+                ? "Save Changes"
+                : "Create Product"}
             </button>
           </>
         }
@@ -295,7 +327,12 @@ export default function AdminProductsPage() {
             <input
               className="form-control"
               value={formData.name}
-              onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
+              onChange={(event) =>
+                setFormData((current) => ({
+                  ...current,
+                  name: event.target.value,
+                }))
+              }
               required
             />
           </div>
@@ -306,7 +343,12 @@ export default function AdminProductsPage() {
               className="form-control"
               rows="4"
               value={formData.description}
-              onChange={(event) => setFormData((current) => ({ ...current, description: event.target.value }))}
+              onChange={(event) =>
+                setFormData((current) => ({
+                  ...current,
+                  description: event.target.value,
+                }))
+              }
             />
           </div>
 
@@ -318,7 +360,12 @@ export default function AdminProductsPage() {
               step="0.01"
               className="form-control"
               value={formData.price}
-              onChange={(event) => setFormData((current) => ({ ...current, price: event.target.value }))}
+              onChange={(event) =>
+                setFormData((current) => ({
+                  ...current,
+                  price: event.target.value,
+                }))
+              }
               required
             />
           </div>
@@ -331,8 +378,12 @@ export default function AdminProductsPage() {
               step="1"
               className="form-control"
               value={formData.stockQuantity}
-              onChange={(event) => setFormData((current) => ({ ...current, stockQuantity: event.target.value }))}
-              required
+              onChange={(event) =>
+                setFormData((current) => ({
+                  ...current,
+                  stockQuantity: event.target.value,
+                }))
+              }
             />
           </div>
 
@@ -341,8 +392,12 @@ export default function AdminProductsPage() {
             <select
               className="form-select"
               value={formData.categoryId}
-              onChange={(event) => setFormData((current) => ({ ...current, categoryId: event.target.value }))}
-              required
+              onChange={(event) =>
+                setFormData((current) => ({
+                  ...current,
+                  categoryId: event.target.value,
+                }))
+              }
             >
               <option value="">Select Category</option>
               {categories.map((category) => (
@@ -358,7 +413,12 @@ export default function AdminProductsPage() {
             <input
               className="form-control"
               value={formData.sku}
-              onChange={(event) => setFormData((current) => ({ ...current, sku: event.target.value }))}
+              onChange={(event) =>
+                setFormData((current) => ({
+                  ...current,
+                  sku: event.target.value,
+                }))
+              }
             />
           </div>
         </form>
