@@ -17,11 +17,9 @@ export default function ProductsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // LOAD CATEGORIES
   useEffect(() => {
     async function loadCategories() {
       try {
@@ -35,28 +33,25 @@ export default function ProductsPage() {
     loadCategories();
   }, []);
 
-  // LOAD PRODUCTS
   useEffect(() => {
     async function loadProducts() {
       setIsLoading(true);
       setError("");
 
       try {
-        const requestParams = {
-          page,
-          perPage: 8,
-        };
+        const response = activeSearch.trim()
+          ? await searchProducts(activeSearch.trim())
+          : await fetchProducts();
+
+        let productList = response.data || [];
 
         if (categoryId) {
-          requestParams.category = categoryId;
+          productList = productList.filter(
+            (product) => String(product.categoryId) === String(categoryId)
+          );
         }
 
-        const response = activeSearch.trim()
-          ? await searchProducts(activeSearch.trim(), requestParams)
-          : await fetchProducts(requestParams);
-
-        // FIX: backend returns data as array
-        setProducts(response.data || []);
+        setProducts(productList);
       } catch (requestError) {
         setError(
           requestError.response?.data?.message ||
@@ -69,17 +64,15 @@ export default function ProductsPage() {
     }
 
     loadProducts();
-  }, [activeSearch, categoryId, page]);
+  }, [activeSearch, categoryId]);
 
   function handleSearchSubmit(event) {
     event.preventDefault();
-    setPage(1);
     setActiveSearch(searchInput);
   }
 
   function handleCategoryChange(event) {
     setCategoryId(event.target.value);
-    setPage(1);
   }
 
   return (
@@ -90,6 +83,35 @@ export default function ProductsPage() {
       />
 
       <div className="catalog-shell p-4 p-lg-5">
+        <div className="catalog-hero mb-4">
+          <div className="row g-4 align-items-center">
+            <div className="col-lg-7">
+              <div className="section-caption mb-3">Electronics Catalog</div>
+              <h2 className="h3 mb-2">
+                Structured browsing for serious buying.
+              </h2>
+              <p className="text-secondary mb-0">
+                Filter categories, search inventory, and move products into
+                checkout without clutter.
+              </p>
+            </div>
+
+            <div className="col-lg-5">
+              <div className="catalog-metrics">
+                <div className="catalog-metric">
+                  <span className="text-secondary small">Visible Products</span>
+                  <strong>{products.length}</strong>
+                </div>
+
+                <div className="catalog-metric">
+                  <span className="text-secondary small">Categories</span>
+                  <strong>{categories.length}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <form
           className="catalog-toolbar row g-3 mb-4"
           onSubmit={handleSearchSubmit}
@@ -103,7 +125,7 @@ export default function ProductsPage() {
                 className="form-control"
                 placeholder="Search products"
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                onChange={(event) => setSearchInput(event.target.value)}
               />
             </div>
           </div>
@@ -129,67 +151,104 @@ export default function ProductsPage() {
           </div>
 
           <div className="col-12 col-lg-3">
-            <button className="btn btn-primary w-100">
-              <Search size={16} /> Search
+            <button
+              type="submit"
+              className="btn btn-primary w-100 d-inline-flex align-items-center justify-content-center gap-2"
+            >
+              <Search size={16} />
+              Search
             </button>
           </div>
         </form>
 
-        {error && <div className="alert alert-danger">{error}</div>}
-
-        {isLoading && (
-          <div className="text-center py-5">Loading products...</div>
-        )}
-
-        {!isLoading && !products.length && (
-          <div className="surface-panel p-5 text-center">
-            <h2>No products found</h2>
-            <p>Try a different category or search term.</p>
+        {activeSearch ? (
+          <div className="alert alert-light border mb-4">
+            Showing results for <strong>{activeSearch}</strong>.
           </div>
-        )}
+        ) : null}
 
-        {!isLoading && products.length > 0 && (
+        {error ? <div className="alert alert-danger">{error}</div> : null}
+
+        {isLoading ? (
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary mb-3" role="status" />
+            <p className="text-secondary mb-0">Loading products...</p>
+          </div>
+        ) : null}
+
+        {!isLoading && !products.length ? (
+          <div className="surface-panel p-5 text-center">
+            <h2 className="h5 mb-2">No products found</h2>
+            <p className="text-secondary mb-0">
+              Try a different category or search term.
+            </p>
+          </div>
+        ) : null}
+
+        {!isLoading && products.length ? (
           <div className="row g-4">
             {products.map((product) => (
               <div className="col-12 col-md-6 col-xl-3" key={product.id}>
                 <div className="catalog-product-card h-100">
-                  <div className="catalog-product-media">
-                    Product Image
-                  </div>
+                  <div className="catalog-product-media">Product Image</div>
 
                   <div className="catalog-product-body">
-                    <h2>{product.name}</h2>
-                    <p>{product.description}</p>
+                    <div className="small text-secondary mb-2">
+                      {product.categoryName || "General"}
+                    </div>
 
-                    <strong>
-                      {formatCurrency(product.price)}
-                    </strong>
+                    <h2 className="h5 mb-2">{product.name}</h2>
 
-                    <button
-                      className="btn btn-primary mt-2"
-                      onClick={() => {
-                        addToCart(product);
-                        showSuccess(
-                          "Added to cart",
-                          `${product.name} added`
-                        );
-                      }}
-                    >
-                      <ShoppingCart size={14} /> Add
-                    </button>
+                    <p className="text-secondary small flex-grow-1">
+                      {product.description ||
+                        "No description available for this product yet."}
+                    </p>
 
-                    <Link
-                      to={`/products/${product.id}`}
-                      className="btn btn-outline-secondary mt-2"
-                    >
-                      View
-                    </Link>
+                    <div className="catalog-product-meta">
+                      <div>
+                        <span className="text-secondary small d-block mb-1">
+                          Price
+                        </span>
+                        <strong>{formatCurrency(product.price)}</strong>
+                      </div>
+
+                      <div className="text-end">
+                        <span className="text-secondary small d-block mb-1">
+                          Stock
+                        </span>
+                        <strong>{product.stockQuantity ?? "Available"}</strong>
+                      </div>
+                    </div>
+
+                    <div className="d-flex gap-2">
+                      <Link
+                        to={`/products/${product.id}`}
+                        className="btn btn-outline-secondary btn-sm flex-grow-1"
+                      >
+                        View Details
+                      </Link>
+
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm d-inline-flex align-items-center gap-2"
+                        onClick={() => {
+                          addToCart(product);
+                          showSuccess(
+                            "Added to cart",
+                            `${product.name} is now in your cart.`
+                          );
+                        }}
+                      >
+                        <ShoppingCart size={15} />
+                        Add
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
     </section>
   );
