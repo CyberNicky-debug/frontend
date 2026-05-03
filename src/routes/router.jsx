@@ -13,7 +13,6 @@ import OrdersPage from "../pages/buyer/OrdersPage";
 import AdminProductsPage from "../pages/admin/AdminProductsPage";
 import AdminCategoriesPage from "../pages/admin/AdminCategoriesPage";
 import AdminOrdersPage from "../pages/admin/AdminOrdersPage";
-import AdminPaymentsPage from "../pages/admin/AdminPaymentsPage";
 
 export const appRouter = createBrowserRouter([
   {
@@ -43,7 +42,6 @@ export const appRouter = createBrowserRouter([
               { path: "products", element: <AdminProductsPage /> },
               { path: "categories", element: <AdminCategoriesPage /> },
               { path: "orders", element: <AdminOrdersPage /> },
-              { path: "payments", element: <AdminPaymentsPage /> },
             ],
           },
         ],

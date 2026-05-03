@@ -139,7 +139,7 @@ export default function CartPage() {
                   </div>
                   <div>
                     <h2 className="h5 mb-1">Order Summary</h2>
-                    <p className="text-secondary small mb-0">Secure handoff to checkout and payment.</p>
+                    <p className="text-secondary small mb-0">Review and place your order.</p>
                   </div>
                 </div>
 
@@ -157,7 +157,7 @@ export default function CartPage() {
                 </div>
 
                 <div className="cart-summary-note">
-                  Orders move into <strong>processing</strong> when created, then update after the Paynow sandbox result.
+                  Orders become <strong>pending</strong> when created. The admin can mark them <strong>completed</strong>.
                 </div>
 
                 <div className="d-grid gap-2">

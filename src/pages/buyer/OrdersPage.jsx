@@ -50,7 +50,7 @@ export default function OrdersPage() {
     <section className="surface-card page-section">
       <PageHeader
         title="My Orders"
-        description="Buyers will review all their orders here with the backend-aligned status flow."
+        description="Track your pending and completed orders."
       />
 
       <div className="orders-shell p-4 p-lg-5">
@@ -58,10 +58,8 @@ export default function OrdersPage() {
           <div className="row g-4 align-items-center">
             <div className="col-lg-8">
               <div className="section-caption mb-3">Order Tracking</div>
-              <h2 className="h3 mb-2">A clean view of every order and payment outcome.</h2>
-              <p className="text-secondary mb-0">
-                Review processing, completed, failed, and cancelled orders from one structured workspace.
-              </p>
+              <h2 className="h3 mb-2">Your orders.</h2>
+              <p className="text-secondary mb-0">New orders are pending until the admin completes them.</p>
             </div>
             <div className="col-lg-4">
               <div className="catalog-metric">

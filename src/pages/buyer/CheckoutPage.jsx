@@ -1,14 +1,11 @@
 import { useMemo, useState } from "react";
-import { CircleAlert, CreditCard, ShieldCheck } from "lucide-react";
+import { CircleAlert, PackageCheck, ShieldCheck } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import AppModal from "../../components/AppModal";
 import PageHeader from "../../components/PageHeader";
-import StatusBadge from "../../components/StatusBadge";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCart } from "../../contexts/CartContext";
 import { useToast } from "../../contexts/ToastContext";
 import { createOrder } from "../../services/orderService";
-import { initiatePayment, verifyPayment } from "../../services/paymentService";
 import { formatCurrency } from "../../utils/formatters";
 
 export default function CheckoutPage() {
@@ -18,13 +15,6 @@ export default function CheckoutPage() {
   const { showError, showSuccess } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [paymentStep, setPaymentStep] = useState({
-    isOpen: false,
-    order: null,
-    payment: null,
-    status: "processing",
-    message: "",
-  });
 
   const orderPayload = useMemo(
     () =>
@@ -40,27 +30,11 @@ export default function CheckoutPage() {
     setError("");
 
     try {
-      const orderResponse = await createOrder(orderPayload);
-      const order = orderResponse.data;
-
-      const paymentResponse = await initiatePayment({
-        orderId: order.id,
-        paymentMethod: "paynow",
-        metadata: {
-          channel: "sandbox",
-          buyerEmail: user?.email,
-        },
-      });
+      await createOrder(orderPayload);
 
       clearCart();
-      showSuccess("Order created", "Your order is processing and the Paynow sandbox has been opened.");
-      setPaymentStep({
-        isOpen: true,
-        order,
-        payment: paymentResponse.data,
-        status: "processing",
-        message: "Order created and Paynow sandbox initiated. Complete or fail the sandbox payment below.",
-      });
+      showSuccess("Order created", "Your order is pending.");
+      navigate("/orders");
     } catch (requestError) {
       const message = requestError.response?.data?.message || "Checkout could not be completed.";
       setError(message);
@@ -70,55 +44,11 @@ export default function CheckoutPage() {
     }
   }
 
-  async function handleSandboxResult(status) {
-    if (!paymentStep.order) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError("");
-
-    try {
-      await verifyPayment({
-        orderId: paymentStep.order.id,
-        transactionId: `PAYNOW-${Date.now()}`,
-        status,
-      });
-
-      const normalizedOrderStatus = status === "completed" ? "completed" : "failed";
-
-      setPaymentStep((current) => ({
-        ...current,
-        status: normalizedOrderStatus,
-        order: {
-          ...current.order,
-          status: normalizedOrderStatus,
-        },
-        message:
-          status === "completed"
-            ? "Payment completed successfully in the sandbox. The order is now marked as completed."
-            : "Payment failed in the sandbox. The order is now marked as failed and can be reviewed in My Orders.",
-      }));
-      showSuccess(
-        status === "completed" ? "Payment completed" : "Payment failed",
-        status === "completed"
-          ? "The order moved to completed."
-          : "The order moved to failed and remains visible in My Orders."
-      );
-    } catch (requestError) {
-      const message = requestError.response?.data?.message || "Unable to update the sandbox payment.";
-      setError(message);
-      showError("Payment update failed", message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   return (
     <section className="surface-card page-section">
       <PageHeader
         title="Checkout"
-        description="Confirm your items, create the order, and complete the Paynow sandbox payment flow."
+        description="Confirm your items and create a pending order."
       />
 
       {!cartItems.length ? (
@@ -136,11 +66,9 @@ export default function CheckoutPage() {
           <div className="checkout-hero mb-4">
             <div className="row g-4 align-items-center">
               <div className="col-lg-7">
-                <div className="section-caption mb-3">Secure Checkout</div>
-                <h2 className="h3 mb-2">One clean step between cart review and payment confirmation.</h2>
-                <p className="text-secondary mb-0">
-                  Orders are created in processing state, then updated by the Paynow sandbox result.
-                </p>
+                <div className="section-caption mb-3">Checkout</div>
+                <h2 className="h3 mb-2">Create your order.</h2>
+                <p className="text-secondary mb-0">New orders start as pending.</p>
               </div>
               <div className="col-lg-5">
                 <div className="checkout-metrics">
@@ -177,7 +105,7 @@ export default function CheckoutPage() {
                   <div>
                     <div className="fw-semibold mb-1">Checkout flow</div>
                     <p className="text-secondary mb-0">
-                      Creating the order sets it to <strong>processing</strong>. The Paynow sandbox result will then move it to <strong>completed</strong> or <strong>failed</strong>.
+                      Creating the order sets it to <strong>pending</strong>. Only an admin can mark it <strong>completed</strong>.
                     </p>
                   </div>
                 </div>
@@ -203,11 +131,11 @@ export default function CheckoutPage() {
               <div className="checkout-summary-card">
                 <div className="d-flex align-items-center gap-3 mb-4">
                   <div className="brand-mark">
-                    <CreditCard size={18} />
+                    <PackageCheck size={18} />
                   </div>
                   <div>
-                    <h2 className="h5 mb-1">Payment Summary</h2>
-                    <p className="text-secondary mb-0">Sandbox payment method: Paynow</p>
+                    <h2 className="h5 mb-1">Order Summary</h2>
+                    <p className="text-secondary mb-0">Status: pending</p>
                   </div>
                 </div>
 
@@ -216,8 +144,8 @@ export default function CheckoutPage() {
                   <span>{cartItems.length}</span>
                 </div>
                 <div className="cart-summary-row">
-                  <span className="text-secondary">Gateway</span>
-                  <span>Paynow Sandbox</span>
+                  <span className="text-secondary">Status</span>
+                  <span>Pending</span>
                 </div>
                 <div className="cart-summary-row cart-summary-total">
                   <span>Total Amount</span>
@@ -227,12 +155,12 @@ export default function CheckoutPage() {
                 {error ? <div className="alert alert-danger mt-3">{error}</div> : null}
 
                 <div className="cart-summary-note">
-                  Order inventory is reserved during processing and updated automatically after the sandbox payment result.
+                  The admin will mark the order complete after review.
                 </div>
 
                 <div className="d-grid gap-2">
                   <button type="button" className="btn btn-primary" disabled={isSubmitting} onClick={handleCreateOrder}>
-                    {isSubmitting ? "Processing..." : "Create Order and Continue"}
+                    {isSubmitting ? "Creating..." : "Create Order"}
                   </button>
                   <Link to="/cart" className="btn btn-outline-secondary">
                     Back to Cart
@@ -244,69 +172,6 @@ export default function CheckoutPage() {
         </div>
       )}
 
-      <AppModal
-        id="paynow-sandbox-modal"
-        title="Paynow Sandbox"
-        isOpen={paymentStep.isOpen}
-        onClose={() => setPaymentStep((current) => ({ ...current, isOpen: false }))}
-        footer={
-          paymentStep.status === "processing" ? (
-            <>
-              <button
-                type="button"
-                className="btn btn-outline-danger"
-                disabled={isSubmitting}
-                onClick={() => handleSandboxResult("failed")}
-              >
-                Mark Failed
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={isSubmitting}
-                onClick={() => handleSandboxResult("completed")}
-              >
-                Mark Completed
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={() => {
-                setPaymentStep((current) => ({ ...current, isOpen: false }));
-                navigate("/orders");
-              }}
-            >
-              View My Orders
-            </button>
-          )
-        }
-      >
-        <div className="d-flex flex-column gap-3">
-          {paymentStep.order ? (
-            <div className="surface-panel p-3">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <span className="text-secondary small">Order</span>
-                <StatusBadge status={paymentStep.order.status || paymentStep.status} />
-              </div>
-              <div className="fw-semibold">{paymentStep.order.orderNumber}</div>
-              <div className="text-secondary small mt-2">
-                Total: {formatCurrency(paymentStep.order.totalAmount)}
-              </div>
-            </div>
-          ) : null}
-
-          {paymentStep.payment ? (
-            <div className="surface-panel p-3">
-              <div className="text-secondary small mb-2">Payment Method</div>
-              <div className="fw-semibold text-capitalize">{paymentStep.payment.paymentMethod}</div>
-            </div>
-          ) : null}
-
-          <p className="mb-0 text-secondary">{paymentStep.message}</p>
-        </div>
-      </AppModal>
     </section>
   );
 }

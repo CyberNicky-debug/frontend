@@ -1,27 +1,19 @@
-import { AlertCircle, CheckCircle2, Clock3, OctagonX } from "lucide-react";
+import { CheckCircle2, Clock3 } from "lucide-react";
 
 const statusConfig = {
-  processing: {
+  pending: {
     icon: Clock3,
-    className: "status-pill status-processing",
+    className: "status-pill status-pending",
   },
   completed: {
     icon: CheckCircle2,
     className: "status-pill status-completed",
   },
-  failed: {
-    icon: AlertCircle,
-    className: "status-pill status-failed",
-  },
-  cancelled: {
-    icon: OctagonX,
-    className: "status-pill status-cancelled",
-  },
 };
 
 export default function StatusBadge({ status }) {
-  const normalizedStatus = status?.toLowerCase?.() || "processing";
-  const config = statusConfig[normalizedStatus] || statusConfig.processing;
+  const normalizedStatus = status?.toLowerCase?.() || "pending";
+  const config = statusConfig[normalizedStatus] || statusConfig.pending;
   const Icon = config.icon;
 
   return (

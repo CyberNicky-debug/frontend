@@ -1,5 +1,4 @@
 import {
-  CreditCard,
   FolderTree,
   Package2,
   ReceiptText,
@@ -10,7 +9,6 @@ const navItems = [
   { to: "/admin/products", label: "Products", icon: Package2 },
   { to: "/admin/categories", label: "Categories", icon: FolderTree },
   { to: "/admin/orders", label: "Orders", icon: ReceiptText },
-  { to: "/admin/payments", label: "Payments", icon: CreditCard },
 ];
 
 export default function AdminLayout() {
@@ -20,7 +18,7 @@ export default function AdminLayout() {
         <div className="surface-panel p-3 sidebar-wrap">
           <div className="mb-3">
             <div className="section-caption mb-2">Administration</div>
-            <p className="text-secondary small mb-0">Manage the catalog, customer orders, and payment records.</p>
+            <p className="text-secondary small mb-0">Manage products, categories, and orders.</p>
           </div>
 
           <nav className="d-flex flex-column gap-2">

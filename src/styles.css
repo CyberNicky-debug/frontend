@@ -132,7 +132,7 @@ a {
   font-weight: 600;
 }
 
-.status-processing {
+.status-pending {
   background-color: var(--warning-soft);
   color: #8a6512;
 }
@@ -140,12 +140,6 @@ a {
 .status-completed {
   background-color: var(--success-soft);
   color: #1e6b45;
-}
-
-.status-failed,
-.status-cancelled {
-  background-color: var(--danger-soft);
-  color: #8f2d3b;
 }
 
 .modal-backdrop-custom {

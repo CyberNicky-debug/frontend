@@ -7,7 +7,7 @@ import { useToast } from "../../contexts/ToastContext";
 import { fetchOrderById, fetchOrders, updateOrderStatus } from "../../services/orderService";
 import { formatCurrency } from "../../utils/formatters";
 
-const orderStatuses = ["processing", "completed", "failed", "cancelled"];
+const orderStatuses = ["pending", "completed"];
 
 export default function AdminOrdersPage() {
   const { showError, showSuccess } = useToast();
@@ -20,7 +20,7 @@ export default function AdminOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState("processing");
+  const [pendingStatus, setPendingStatus] = useState("completed");
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function AdminOrdersPage() {
     try {
       const response = await fetchOrderById(orderId);
       setSelectedOrder(response.data);
-      setPendingStatus(response.data.status || "processing");
+      setPendingStatus("completed");
       setIsDetailModalOpen(true);
     } catch (requestError) {
       const message = requestError.response?.data?.message || "Unable to load order details.";
@@ -64,7 +64,7 @@ export default function AdminOrdersPage() {
 
   function openStatusModal(order) {
     setSelectedOrder(order);
-    setPendingStatus(order.status || "processing");
+    setPendingStatus("completed");
     setIsStatusModalOpen(true);
   }
 
@@ -105,7 +105,7 @@ export default function AdminOrdersPage() {
     <section className="surface-card page-section">
       <PageHeader
         title="Manage Orders"
-        description="Admin will review and update orders here using your four-state lifecycle only."
+        description="Admin can complete pending orders."
       />
 
       <div className="surface-panel p-3 mb-4">
@@ -179,6 +179,7 @@ export default function AdminOrdersPage() {
                         <button
                           type="button"
                           className="btn btn-outline-primary btn-sm"
+                          disabled={order.status === "completed"}
                           onClick={() => openStatusModal(order)}
                         >
                           <PencilLine size={14} />
@@ -320,17 +321,7 @@ export default function AdminOrdersPage() {
           </div>
           <div>
             <label className="form-label">Status</label>
-            <select
-              className="form-select"
-              value={pendingStatus}
-              onChange={(event) => setPendingStatus(event.target.value)}
-            >
-              {orderStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
+            <input className="form-control" value={pendingStatus} disabled />
           </div>
         </form>
       </AppModal>
