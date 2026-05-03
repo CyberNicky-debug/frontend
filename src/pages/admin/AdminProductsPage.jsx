@@ -42,10 +42,10 @@ export default function AdminProductsPage() {
       setError("");
 
       try {
-        const [productResponse, categoryResponse] = await Promise.all([
-          fetchProducts({ page: 1, perPage: 100 }),
-          fetchCategories(),
-        ]);
+       const [productResponse, categoryResponse] = await Promise.all([
+  fetchProducts(), // ✅ FIXED
+  fetchCategories(),
+]);
 
         // Backend returns: { success: true, data: [...] }
         setProducts(productResponse.data || []);
