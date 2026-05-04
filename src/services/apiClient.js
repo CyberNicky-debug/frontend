@@ -2,7 +2,7 @@ import axios from "axios";
 import { getStoredToken } from "../utils/storage";
 
 const apiClient = axios.create({
-  baseURL: "/api/v1",
+  baseURL: "https://backend-em64.onrender.com/api/v1",
   headers: {
     "Content-Type": "application/json",
   },
