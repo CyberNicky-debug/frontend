@@ -23,8 +23,13 @@ export function AuthProvider({ children }) {
 
       try {
         const response = await fetchProfile();
-        setUser(response.data);
-        saveSession(token, response.data);
+        const profile = {
+          ...response.data,
+          role: response.data.role?.toLowerCase(),
+        };
+
+        setUser(profile);
+        saveSession(token, profile);
       } catch {
         clearSession();
         setToken(null);
@@ -40,12 +45,13 @@ export function AuthProvider({ children }) {
   async function login(credentials) {
     const response = await loginUser(credentials);
     const sessionToken = response.data.token;
+    const role = response.data.role?.toLowerCase();
     const sessionUser = {
       id: response.data.id,
       email: response.data.email,
       firstName: response.data.firstName,
       lastName: response.data.lastName,
-      role: response.data.role,
+      role,
     };
 
     setToken(sessionToken);
@@ -58,12 +64,13 @@ export function AuthProvider({ children }) {
   async function register(payload) {
     const response = await registerUser(payload);
     const sessionToken = response.data.token;
+    const role = response.data.role?.toLowerCase() || "customer";
     const sessionUser = {
       id: response.data.id,
       email: response.data.email,
       firstName: response.data.firstName,
       lastName: response.data.lastName,
-      role: response.data.role || "customer",
+      role,
     };
 
     setToken(sessionToken);
